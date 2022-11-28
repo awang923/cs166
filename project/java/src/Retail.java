@@ -400,7 +400,12 @@ public class Retail {
 
    public static void viewStores(Retail esql) {
       try {
-
+         System.out.print("\tEnter userID: ");
+         int userID = in.read();
+         String query = String.format("SELECT S.storeId, S.name, calculateDistance(S.latitude, S.longitude, U.latitude, U.longitude) as dist FROM Users U, Store S WHERE U.userId = '%d' AND calculateDistance(S.latitude, S.longitude, U.latitude, U.longitude) < 30", userID);
+         esql.executeQueryAndPrintResult(query);
+         int rowCount = esql.executeQuery(query);
+         System.out.println ("total row(s): " + rowCount);
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
@@ -411,6 +416,7 @@ public class Retail {
          int storeID = in.read();
          String query = String.format("SELECT * FROM PRODUCT WHERE storeID = ");
          query += storeID;
+         esql.executeQueryAndPrintResult(query);
          int rowCount = esql.executeQuery(query);
          System.out.println ("total row(s): " + rowCount);
       }catch (Exception e) {
