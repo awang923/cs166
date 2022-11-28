@@ -425,6 +425,14 @@ public class Retail {
    }
    public static void placeOrder(Retail esql) {
       try {
+         System.out.print("\tEnter storeId: ");
+         int storeId = in.read();
+         System.out.print("\tEnter product name: ");
+         String productName = in.readLine();
+         System.out.print("\tEnter number of units: ");
+         int numberOfUnits = in.read();
+
+         // String query = String.format("SELECT S.store")
 
       }catch (Exception e) {
          System.err.println(e.getMessage());
@@ -439,7 +447,21 @@ public class Retail {
    }
    public static void updateProduct(Retail esql) {
       try {
+         System.out.print("\tEnter stroeID: ");
+         int storeId = in.read();
+         System.out.print("\tEnter product name: ");
+         String productName = in.readLine();
+         System.out.print("\tEnter number of units: ");
+         int numberOfUnits = in.read();
+         System.out.print("\tEnter price per unit: ");
+         int pricerPerUnit = in.read();
 
+         String query = String.format("UPDATE Product SET numberOfUnits = ‘%d’, pricePerUnit = ‘%d’ WHERE productName = ‘%s’ AND storeID = ‘%d’", numberOfUnits, pricerPerUnit, productName, storeId);
+         esql.executeUpdate(query);
+
+         String query2 = String.format("SELECT * FROM Product WHERE storeID = '%d'", storeId);
+         esql.executeQueryAndPrintResult(query2);
+         
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
