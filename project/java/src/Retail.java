@@ -401,8 +401,8 @@ public class Retail {
    public static void viewStores(Retail esql) {
       try {
          System.out.print("\tEnter userID: ");
-         int userID = in.read();
-         String query = String.format("SELECT S.storeId, S.name, calculateDistance(S.latitude, S.longitude, U.latitude, U.longitude) as dist FROM Users U, Store S WHERE U.userId = '%d' AND calculateDistance(S.latitude, S.longitude, U.latitude, U.longitude) < 30", userID);
+         int userID = Integer.parseInt(in.readLine());
+         String query = String.format("SELECT S.storeId, S.name, calculate_distance(S.latitude, S.longitude, U.latitude, U.longitude) as dist FROM Users U, Store S WHERE U.userId = '%d' AND calculate_distance(S.latitude, S.longitude, U.latitude, U.longitude) < 30", userID);
          esql.executeQueryAndPrintResult(query);
          int rowCount = esql.executeQuery(query);
          System.out.println ("total row(s): " + rowCount);
@@ -413,7 +413,7 @@ public class Retail {
    public static void viewProducts(Retail esql) {
       try{
          System.out.print("\tEnter storeID: ");
-         int storeID = in.read();
+         int storeID = Integer.parseInt(in.readLine());
          String query = String.format("SELECT * FROM PRODUCT WHERE storeID = ");
          query += storeID;
          esql.executeQueryAndPrintResult(query);
@@ -447,21 +447,26 @@ public class Retail {
    }
    public static void updateProduct(Retail esql) {
       try {
+         System.out.print("\tEnter userID: ");
+         int userId = Integer.parseInt(in.readLine());
          System.out.print("\tEnter stroeID: ");
-         int storeId = in.read();
+         int storeId = Integer.parseInt(in.readLine());
          System.out.print("\tEnter product name: ");
          String productName = in.readLine();
          System.out.print("\tEnter number of units: ");
-         int numberOfUnits = in.read();
+         int numberOfUnits = Integer.parseInt(in.readLine());
          System.out.print("\tEnter price per unit: ");
-         int pricerPerUnit = in.read();
+         int pricerPerUnit = Integer.parseInt(in.readLine());
 
-         String query = String.format("UPDATE Product SET numberOfUnits = ‘%d’, pricePerUnit = ‘%d’ WHERE productName = ‘%s’ AND storeID = ‘%d’", numberOfUnits, pricerPerUnit, productName, storeId);
+         String query = String.format("UPDATE Product SET numberOfUnits = '%d', pricePerUnit = '%d' WHERE productName = '%s' AND storeID = '%d'", numberOfUnits, pricerPerUnit, productName, storeId);
          esql.executeUpdate(query);
+
+         String insert_query = String.format("INSERT INTO ProductUpdates(managerID, storeID, productName, updatedOn) VALUES ('%d', '%d', '%s', CURRENT_TIMESTAMP)", userId, storeId, productName);
+         esql.executeUpdate(insert_query);
 
          String query2 = String.format("SELECT * FROM Product WHERE storeID = '%d'", storeId);
          esql.executeQueryAndPrintResult(query2);
-         
+
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
@@ -475,6 +480,10 @@ public class Retail {
    }
    public static void viewPopularProducts(Retail esql) {
       try {
+         System.out.print("\tEnter storeId: ");
+         int storeId = Integer.parseInt(in.readLine());
+         String query = String.format("SELECT productName, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY productName ORDER BY COUNT(*) DESC LIMIT 5", storeId);
+         esql.executeQueryAndPrintResult(query);
 
       }catch (Exception e) {
          System.err.println(e.getMessage());
@@ -482,7 +491,10 @@ public class Retail {
    }
    public static void viewPopularCustomers(Retail esql) {
       try {
-
+         System.out.print("\tEnter storeId: ");
+         int storeId = Integer.parseInt(in.readLine());
+         String query = String.format("SELECT customerID, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY customerID ORDER BY COUNT(*) DESC LIMIT 5", storeId);
+         esql.executeQueryAndPrintResult(query);
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
