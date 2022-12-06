@@ -396,6 +396,57 @@ public class Retail {
       }
    }//end
 
+   public static int[] checkUserType(Retail esql){
+      try{
+         int[] ans = new int[2];
+         System.out.print("\tEnter user ID: ");
+         int userID = Integer.parseInt(in.readLine());
+         String query = String.format("SELECT U.type FROM Users U WHERE U.userID = '%d' AND U.type = 'manager'", userID);
+         String query2 = String.format("SELECT U.type FROM Users U WHERE U.userID = '%d' AND U.type = 'admin'", userID);
+         int managerNum = esql.executeQuery(query);
+         int adminNum = esql.executeQuery(query2);
+         int storeID = 0;
+         if (adminNum > 0) {
+            System.out.println("\tUser is an admin");
+            System.out.print("\tEnter store ID: ");
+            storeID = Integer.parseInt(in.readLine());
+            ans[0] = userID;
+            ans[1] = storeID;
+            return ans;
+         }
+         else if (managerNum > 0) {
+            System.out.println("\tUser is a manager");
+            storeID = checkStoreID(esql, userID);
+            if(storeID == 0) {
+              System.out.println("\tInvalid storeID");
+            }
+            ans[0] = userID;
+            ans[1] = storeID;
+            return ans;
+         }
+         return new int[] {0,0};
+      }catch(Exception e){
+         System.out.println("\tUser is not an admin or manager.");
+         return new int[] {0,0};
+      }
+    }
+ 
+   public static int checkStoreID(Retail esql, int userID){
+       try{
+         System.out.print("\tEnter store ID: ");
+         int storeID = Integer.parseInt(in.readLine());
+         String query = String.format("SELECT S.storeID FROM Store S WHERE S.storeID = '%d' AND S.managerID = '%d'",storeID, userID);
+         int num = esql.executeQuery(query);
+         if (num > 0){
+           return storeID;
+         }
+         return 0;
+       }catch(Exception e){
+         System.out.println("\tUserID and storeID doesn't match.");
+         return 0;
+       }
+   } 
+
 // Rest of the functions definition go in here
 
    public static void viewStores(Retail esql) {
@@ -447,10 +498,16 @@ public class Retail {
    }
    public static void updateProduct(Retail esql) {
       try {
-         System.out.print("\tEnter userID: ");
-         int userId = Integer.parseInt(in.readLine());
-         System.out.print("\tEnter stroeID: ");
-         int storeId = Integer.parseInt(in.readLine());
+         int[] user = checkUserType(esql);
+         int userID = user[0];
+         if(userID == 0) {
+           System.out.println("\tUser is not an admin or manager");
+           return;
+         }
+         int storeID = user[1];
+         if(storeID == 0){
+           return;
+         }
          System.out.print("\tEnter product name: ");
          String productName = in.readLine();
          System.out.print("\tEnter number of units: ");
@@ -458,19 +515,20 @@ public class Retail {
          System.out.print("\tEnter price per unit: ");
          int pricerPerUnit = Integer.parseInt(in.readLine());
 
-         String query = String.format("UPDATE Product SET numberOfUnits = '%d', pricePerUnit = '%d' WHERE productName = '%s' AND storeID = '%d'", numberOfUnits, pricerPerUnit, productName, storeId);
+         String query = String.format("UPDATE Product SET numberOfUnits = '%d', pricePerUnit = '%d' WHERE productName = '%s' AND storeID = '%d'", numberOfUnits, pricerPerUnit, productName, storeID);
          esql.executeUpdate(query);
 
-         String insert_query = String.format("INSERT INTO ProductUpdates(managerID, storeID, productName, updatedOn) VALUES ('%d', '%d', '%s', CURRENT_TIMESTAMP)", userId, storeId, productName);
+         String insert_query = String.format("INSERT INTO ProductUpdates(managerID, storeID, productName, updatedOn) VALUES ('%d', '%d', '%s', CURRENT_TIMESTAMP)", userID, storeID, productName);
          esql.executeUpdate(insert_query);
 
-         String query2 = String.format("SELECT * FROM Product WHERE storeID = '%d'", storeId);
+         String query2 = String.format("SELECT * FROM Product WHERE storeID = '%d'", storeID);
          esql.executeQueryAndPrintResult(query2);
 
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
    }
+
    public static void viewRecentUpdates(Retail esql) {
       try {
 
@@ -480,9 +538,17 @@ public class Retail {
    }
    public static void viewPopularProducts(Retail esql) {
       try {
-         System.out.print("\tEnter storeId: ");
-         int storeId = Integer.parseInt(in.readLine());
-         String query = String.format("SELECT productName, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY productName ORDER BY COUNT(*) DESC LIMIT 5", storeId);
+         int[] user = checkUserType(esql);
+         int userID = user[0];
+         if(userID == 0) {
+           System.out.println("\tUser is not an admin or manager");
+           return;
+         }
+         int storeID = user[1];
+         if(storeID == 0){
+           return;
+         }
+         String query = String.format("SELECT productName, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY productName ORDER BY COUNT(*) DESC LIMIT 5", storeID);
          esql.executeQueryAndPrintResult(query);
 
       }catch (Exception e) {
@@ -491,14 +557,23 @@ public class Retail {
    }
    public static void viewPopularCustomers(Retail esql) {
       try {
-         System.out.print("\tEnter storeId: ");
-         int storeId = Integer.parseInt(in.readLine());
-         String query = String.format("SELECT customerID, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY customerID ORDER BY COUNT(*) DESC LIMIT 5", storeId);
+         int[] user = checkUserType(esql);
+         int userID = user[0];
+         if(userID == 0) {
+           System.out.println("\tUser is not an admin or manager");
+           return;
+         }
+         int storeID = user[1];
+         if(storeID == 0){
+           return;
+         }
+         String query = String.format("SELECT customerID, COUNT(*) FROM Orders WHERE storeID = '%d' GROUP BY customerID ORDER BY COUNT(*) DESC LIMIT 5", storeID);
          esql.executeQueryAndPrintResult(query);
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
    }
+
    public static void placeProductSupplyRequests(Retail esql) {
       try {
 
