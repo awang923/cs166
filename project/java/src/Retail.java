@@ -34,7 +34,7 @@ public class Retail {
 
    // reference to physical database connection.
    private Connection _connection = null;
-
+    private static String userID = "";
    // handling the keyboard inputs through a BufferedReader
    // This variable can be global for convenience.
    static BufferedReader in = new BufferedReader(
@@ -476,24 +476,56 @@ public class Retail {
    }
    public static void placeOrder(Retail esql) {
       try {
-         System.out.print("\tEnter storeId: ");
-         int storeId = in.read();
          System.out.print("\tEnter product name: ");
          String productName = in.readLine();
-         System.out.print("\tEnter number of units: ");
-         int numberOfUnits = in.read();
-
-         // String query = String.format("SELECT S.store")
-
+         System.out.print("\tEnter storeId: ");
+         String storeId = in.readLine();
+         System.out.print("\nEnter number of units: ");
+         Integer numberOfUnits = in.read();
+         boolean correctStore = true;
+            //check store validity
+         String query1 = String.format("SELECT * FROM Store where storeID = %s", storeId);
+         int result = esql.executeQuery(query1);
+         if(result == 0){
+            System.out.println("Store not found");
+         }
+         //check distance
+         // String query2 = String.format("SELECT latitude, longitude FROM Store WHERE storeID = %s", storeId);
+         // List<List<String>> stores = esql.executeQueryAndReturnResult(query2);
+         // double distance = esql.calculateDistance(euser, esql.getUserLongitude(), stores.get(0), stores.get(1));
+         // if(distance >= 30 || distance <= 0){
+         //    System.out.println("Store not found in desired radius!");
+         // }
+         //check stock
+         String query3 = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %s and productName = '%s'", storeId, productName);
+         List<List<String>> units = esql.executeQueryAndReturnResult(query3);
+         if(units.size() != 0){
+            System.out.println("Item out of stock");
+         }else if(numberOfUnits < units.size()){
+            System.out.println("Not enough stock of item");
+         }else{
+            query3 = String.format("INSERT INTO Orders (storeID, productName, unitsOrdered) VALUES (%s, %s, 2)", storeId, productName);
+            esql.executeUpdate(query3);
+         }
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
    }
    public static void viewRecentOrders(Retail esql) {
-      try {
-
-      }catch (Exception e) {
-         System.err.println(e.getMessage());
+      try{
+         System.out.print("\tEnter userId: ");
+         userID = in.readLine();
+         String query = String.format("SELECT * FROM Orders WHERE customerID = %s ORDER BY orderTime DESC", userID);
+         List<List<String>> res = esql.executeQueryAndReturnResult(query);
+         System.out.println("\nFive of your most recent orders: ");
+         System.out.println("Store ID\tStore Name\t\t\tProduct Name\t\t\tNumber of Units\t\tOrder Time");
+         for(int i = 0; i < 5; i++) {
+            String storeName = esql.executeQueryAndReturnResult(String.format("SELECT name FROM STORE WHERE storeID = '%s'", res.get(i).get(2))).get(0).get(0);
+            System.out.println(res.get(i).get(2) + "\t\t" + storeName + "\t" + res.get(i).get(3) + "\t" + res.get(i).get(4) + "\t\t\t" + res.get(i).get(5));
+         }
+         System.out.println("\n");
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
       }
    }
    public static void updateProduct(Retail esql) {
@@ -530,10 +562,22 @@ public class Retail {
    }
 
    public static void viewRecentUpdates(Retail esql) {
-      try {
-
-      }catch (Exception e) {
-         System.err.println(e.getMessage());
+      try{
+         int[] user = checkUserType(esql);
+         int userID = user[0];
+         if(userID == 0) {
+           System.out.println("\tUser is not an admin or manager");
+           return;
+         }
+         String query = String.format("SELECT P.productName, P.storeID, P.managerID, P.updateNumber, P.updatedOn FROM ProductUpdates P  WHERE P.storeID IN ( SELECT S.storeID FROM Store S WHERE S.managerID = %s) ORDER BY P.updatedOn DESC", userID);
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+         System.out.println("Product Name\n\tStore ID\t\tManager ID\tUpdate Number\tUpdated ON");
+         for(int i = 0; i < result.size(); i++) {
+            System.out.println(result.get(i).get(0) + "\t" + result.get(i).get(1) + "\t\t" + result.get(i).get(2)  + "\t\t" + result.get(i).get(3)  + "\t\t" + result.get(i).get(4));
+         }
+         System.out.println("\n");
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
       }
    }
    public static void viewPopularProducts(Retail esql) {
@@ -576,7 +620,33 @@ public class Retail {
 
    public static void placeProductSupplyRequests(Retail esql) {
       try {
-
+         int[] user = checkUserType(esql);
+         int userID = user[0];
+         if(userID == 0) {
+           System.out.println("\tUser is not an admin or manager");
+           return;
+         }
+         int storeID = user[1];
+         if(storeID == 0){
+           return;
+         }
+         System.out.print("\nInput Product Name: ");
+         String productName = in.readLine();
+         System.out.print("\nInput Number of Products Needed: ");
+         String numberProductsNeeded = in.readLine();
+         System.out.print("\n Input Warehouse ID: ");
+         String warehouseID = in.readLine();
+         
+         String query = String.format("SELECT * FROM Product P WHERE P.productName = '%s'", productName);
+         List<List<String>> res = esql.executeQueryAndReturnResult(query);
+         if(res.size() <= 0){
+            System.out.println("Product is not at given store");
+         }
+         query = String.format(
+            "INSERT INTO ProductSupplyRequests (managerID, warehouseID, storeID, productName, unitsRequested) VALUES (%d, %s, %s, '%s', %s)",
+            userID, warehouseID, storeID, productName, numberProductsNeeded
+         );
+         esql.executeUpdate(query);
       }catch (Exception e) {
          System.err.println(e.getMessage());
       }
